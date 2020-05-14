@@ -289,7 +289,7 @@ class DocumentMetadata(object):
     """
     def __init__(self, title=None, authors=None, description=None,
                  keywords=None, generator=None, created=None, modified=None,
-                 attachments=None):
+                 attachments=None, extended=None):
         #: The title of the document, as a string or :obj:`None`.
         #: Extracted from the ``<title>`` element in HTML
         #: and written to the ``/Title`` info field in PDF.
@@ -332,6 +332,11 @@ class DocumentMetadata(object):
         #:
         #: .. versionadded:: 0.22
         self.attachments = attachments or []
+
+        #: Metadata extension to support Brazil ITI OID tags
+        #: Extracted from ``<meta name=metadata>``` element in HTML
+        #: and written to the ``/{content}`` into field in PDF.
+        self.extended = extended or []
 
 
 BookmarkSubtree = collections.namedtuple(
@@ -393,6 +398,7 @@ class Document(object):
             [Page(page_box, enable_hinting) for page_box in page_boxes],
             DocumentMetadata(**html._get_metadata()),
             html.url_fetcher, font_config)
+
         return rendering
 
     def __init__(self, pages, metadata, url_fetcher, font_config):
@@ -692,16 +698,18 @@ class Document(object):
         # - attachments as function parameters
         # - attachments as PDF links
         # - bleed boxes
+
         condition = (
             self.metadata.attachments or
             attachments or
             any(attachment_links) or
-            any(any(page.bleed.values()) for page in self.pages))
+            any(any(page.bleed.values()) for page in self.pages) or
+            len(self.metadata.extended))
         if condition:
             write_pdf_metadata(
                 file_obj, scale, self.url_fetcher,
                 self.metadata.attachments + (attachments or []),
-                attachment_links, self.pages)
+                attachment_links, self.pages, self.metadata.extended)
 
         if target is None:
             return file_obj.getvalue()

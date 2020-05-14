@@ -477,7 +477,7 @@ def _write_pdf_attachment(pdf, attachment, url_fetcher):
 
 
 def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
-                       attachment_links, pages):
+                       attachment_links, pages, extended):
     """Add PDF metadata that are not handled by cairo.
 
     Includes:
@@ -500,6 +500,12 @@ def write_pdf_metadata(fileobj, scale, url_fetcher, attachments,
                                  embedded_files_id)
         pdf.extend_dict(pdf.catalog, params)
 
+    if len(extended):
+        extended_params = b''
+        for ex in extended:
+            extended_params += pdf_format('/{0} \n', ex)
+
+        pdf.extend_dict(pdf.info, extended_params)
     # Add attachments
 
     # A single link can be split in multiple regions. We don't want to embed
