@@ -284,6 +284,7 @@ def get_html_metadata(wrapper_element, base_url):
     created = None
     modified = None
     attachments = []
+    extended = []
     for element in wrapper_element.query_all('title', 'meta', 'link'):
         element = element.etree_element
         if element.tag == 'title' and title is None:
@@ -305,6 +306,8 @@ def get_html_metadata(wrapper_element, base_url):
                 created = parse_w3c_date(name, content)
             elif name == 'dcterms.modified' and modified is None:
                 modified = parse_w3c_date(name, content)
+            elif name == 'metadata':
+                extended.append(content)
         elif element.tag == 'link' and element_has_link_type(
                 element, 'attachment'):
             url = get_url_attribute(element, 'href', base_url)
@@ -316,7 +319,8 @@ def get_html_metadata(wrapper_element, base_url):
     return dict(title=title, description=description, generator=generator,
                 keywords=keywords, authors=authors,
                 created=created, modified=modified,
-                attachments=attachments)
+                attachments=attachments,
+                extended=extended)
 
 
 def strip_whitespace(string):
